@@ -1,4 +1,3 @@
-# AI Agent 系统 (1号机)
 
 基于多模型 (ModelScope / DeepSeek) 的多用户 AI Agent 系统，支持 function calling、MCP 协议、用户管理、会话记忆隔离、工具生态扩展、图片分析/编辑/生图、对话分支管理、结构化日志与全链路追踪。前后端分离架构，API 兼容原 CLI 模式。
 
@@ -50,6 +49,7 @@
 ### 1. 安装依赖
 
 ```bash
+conda create -n agent_web
 conda activate agent_web
 pip install -r requirements.txt
 ```
@@ -69,7 +69,7 @@ MODELSCOPE_API_KEY=
 DEEPSEEK_API_KEY=
 
 # ====== 以下必填 ======
-JWT_SECRET=change-me-in-production  # 生产环境务必更换
+JWT_SECRET=change-me-in-production  
 MYSQL_HOST=localhost
 MYSQL_USER=root
 MYSQL_PASSWORD=your-password
@@ -248,9 +248,6 @@ pythonProject1/
 
 ## 安全注意事项
 
-- 不要将 `.env` 提交到版本控制
-- API Key 仅存储在 `.env` 中
 - 密码使用 SHA-256 哈希存储
 - 文件系统工具限制在用户目录范围内，禁止目录穿越
 - 环境变量读取使用白名单机制
-- JWT Secret 生产环境务必更换
