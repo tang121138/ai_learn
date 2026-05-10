@@ -42,3 +42,5 @@ frontend/dist/
 *.exe
 venv/
 frontend/node_modules/
+DeepPanel/
+tests/eval/snapshots/
