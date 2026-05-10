@@ -1,0 +1,99 @@
+{
+  "name": "multimodal",
+  "version": "1.0",
+  "cases": [
+    {
+      "id": "mm_001",
+      "category": "image_recognition",
+      "input": "[图片] 请描述这张图片的内容",
+      "expected_tool": "analyze_image",
+      "expected_keywords": [],
+      "min_response_length": 10,
+      "max_latency_ms": 30000
+    },
+    {
+      "id": "mm_002",
+      "category": "image_recognition",
+      "input": "[图片] 这张图里有什么文字？",
+      "expected_tool": "analyze_image",
+      "expected_keywords": [],
+      "min_response_length": 5,
+      "max_latency_ms": 30000
+    },
+    {
+      "id": "mm_003",
+      "category": "image_recognition",
+      "input": "[图片] 这张图片的主色调是什么？",
+      "expected_tool": "analyze_image",
+      "expected_keywords": [],
+      "min_response_length": 5,
+      "max_latency_ms": 30000
+    },
+    {
+      "id": "mm_004",
+      "category": "image_gen",
+      "input": "帮我画一幅夕阳下的海滩风景画",
+      "expected_tool": "generate_image",
+      "expected_args": {"prompt": "夕阳下的海滩"},
+      "expected_keywords": [],
+      "min_response_length": 5,
+      "max_latency_ms": 60000
+    },
+    {
+      "id": "mm_005",
+      "category": "image_gen",
+      "input": "生成一张可爱猫咪的图片",
+      "expected_tool": "generate_image",
+      "expected_args": {"prompt": "可爱猫咪"},
+      "expected_keywords": [],
+      "min_response_length": 5,
+      "max_latency_ms": 60000
+    },
+    {
+      "id": "mm_006",
+      "category": "image_gen",
+      "input": "创作一张赛博朋克风格的城市夜景图",
+      "expected_tool": "generate_image",
+      "expected_args": {"prompt": "赛博朋克"},
+      "expected_keywords": [],
+      "min_response_length": 5,
+      "max_latency_ms": 60000
+    },
+    {
+      "id": "mm_007",
+      "category": "image_gen",
+      "input": "画一只在水里游泳的北极熊",
+      "expected_tool": "generate_image",
+      "expected_keywords": [],
+      "min_response_length": 5,
+      "max_latency_ms": 60000
+    },
+    {
+      "id": "mm_008",
+      "category": "no_tool",
+      "input": "描述一下蒙娜丽莎这幅画是什么样的？",
+      "expected_tool": null,
+      "expected_keywords": ["微笑", "达芬奇"],
+      "min_response_length": 15,
+      "max_latency_ms": 10000
+    },
+    {
+      "id": "mm_009",
+      "category": "no_tool",
+      "input": "梵高的星空有什么艺术特点？",
+      "expected_tool": null,
+      "expected_keywords": ["印象", "笔触"],
+      "min_response_length": 15,
+      "max_latency_ms": 10000
+    },
+    {
+      "id": "mm_010",
+      "category": "no_tool",
+      "input": "AI绘画和传统绘画有什么区别？",
+      "expected_tool": null,
+      "expected_keywords": ["算法", "创作"],
+      "min_response_length": 15,
+      "max_latency_ms": 10000
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+[
+  {
+    "name": "filesystem",
+    "transport": "stdio",
+    "_comment_npx": "Windows 下需 .cmd 扩展名才能被 CreateProcess 找到",
+    "command": "npx.cmd",
+    "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+    "enabled": true
+  },
+  {
+    "name": "sqlite",
+    "transport": "stdio",
+    "command": "uvx",
+    "args": ["mcp-server-sqlite", "--db-path", "data.db"],
+    "enabled": true
+  },
+  {
+    "name": "fetch",
+    "transport": "stdio",
+    "command": "uvx",
+    "args": ["mcp-server-fetch"],
+    "enabled": true
+  }
+]

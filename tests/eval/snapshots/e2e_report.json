@@ -1,0 +1,783 @@
+{
+  "test_user": "eval_test_10e567",
+  "base_url": "http://localhost:9090",
+  "timestamp": "2026-05-11T01:55:07.508132+08:00",
+  "total": 76,
+  "passed": 74,
+  "failed": 2,
+  "pass_rate": 0.9737,
+  "total_duration_ms": 292064,
+  "modules": {
+    "health": {
+      "total": 2,
+      "passed": 2,
+      "pass_rate": 1.0
+    },
+    "auth": {
+      "total": 6,
+      "passed": 6,
+      "pass_rate": 1.0
+    },
+    "models": {
+      "total": 2,
+      "passed": 2,
+      "pass_rate": 1.0
+    },
+    "tools": {
+      "total": 1,
+      "passed": 1,
+      "pass_rate": 1.0
+    },
+    "mcp": {
+      "total": 1,
+      "passed": 1,
+      "pass_rate": 1.0
+    },
+    "session": {
+      "total": 6,
+      "passed": 6,
+      "pass_rate": 1.0
+    },
+    "chat": {
+      "total": 8,
+      "passed": 7,
+      "pass_rate": 0.875
+    },
+    "usage": {
+      "total": 2,
+      "passed": 2,
+      "pass_rate": 1.0
+    },
+    "image": {
+      "total": 3,
+      "passed": 3,
+      "pass_rate": 1.0
+    },
+    "edge": {
+      "total": 8,
+      "passed": 8,
+      "pass_rate": 1.0
+    },
+    "multiturn": {
+      "total": 6,
+      "passed": 5,
+      "pass_rate": 0.8333
+    },
+    "img_analysis": {
+      "total": 4,
+      "passed": 4,
+      "pass_rate": 1.0
+    },
+    "img_chain": {
+      "total": 4,
+      "passed": 4,
+      "pass_rate": 1.0
+    },
+    "branch": {
+      "total": 6,
+      "passed": 6,
+      "pass_rate": 1.0
+    },
+    "ctx_iso": {
+      "total": 9,
+      "passed": 9,
+      "pass_rate": 1.0
+    },
+    "img_ctx": {
+      "total": 7,
+      "passed": 7,
+      "pass_rate": 1.0
+    },
+    "cleanup": {
+      "total": 1,
+      "passed": 1,
+      "pass_rate": 1.0
+    }
+  },
+  "results": [
+    {
+      "id": "e2e_H01",
+      "module": "health",
+      "name": "后端服务可达",
+      "passed": true,
+      "duration_ms": 2136.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_H02",
+      "module": "health",
+      "name": "健康检查含版本号",
+      "passed": true,
+      "duration_ms": 4.8,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_A01",
+      "module": "auth",
+      "name": "注册用户 eval_test_10e567",
+      "passed": true,
+      "duration_ms": 72.5,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_A02",
+      "module": "auth",
+      "name": "重复注册 → 409",
+      "passed": true,
+      "duration_ms": 22.4,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_A03",
+      "module": "auth",
+      "name": "登录获取 JWT",
+      "passed": true,
+      "duration_ms": 18.6,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_A04",
+      "module": "auth",
+      "name": "错误密码 → 401",
+      "passed": true,
+      "duration_ms": 14.4,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_A05",
+      "module": "auth",
+      "name": "GET /me 返回当前用户",
+      "passed": true,
+      "duration_ms": 7.3,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_A06",
+      "module": "auth",
+      "name": "无 Token → 401",
+      "passed": true,
+      "duration_ms": 4.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_M01",
+      "module": "models",
+      "name": "模型列表 ≥3 类型齐全",
+      "passed": true,
+      "duration_ms": 12.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_M02",
+      "module": "models",
+      "name": "默认模型在列表内",
+      "passed": true,
+      "duration_ms": 5.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_M03",
+      "module": "tools",
+      "name": "工具列表含全部6类工具",
+      "passed": true,
+      "duration_ms": 69.5,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_M04",
+      "module": "mcp",
+      "name": "MCP 服务器状态可查询",
+      "passed": true,
+      "duration_ms": 10.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_S01",
+      "module": "session",
+      "name": "创建会话",
+      "passed": true,
+      "duration_ms": 17.2,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_S02",
+      "module": "session",
+      "name": "创建会话+绑定模型",
+      "passed": true,
+      "duration_ms": 12.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_S03",
+      "module": "session",
+      "name": "会话列表 ≥2",
+      "passed": true,
+      "duration_ms": 13.8,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_S04",
+      "module": "session",
+      "name": "获取会话详情",
+      "passed": true,
+      "duration_ms": 10.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_S05",
+      "module": "session",
+      "name": "更新会话标题",
+      "passed": true,
+      "duration_ms": 16.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_S06",
+      "module": "session",
+      "name": "访问不存在会话 → 404",
+      "passed": true,
+      "duration_ms": 5.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_C01",
+      "module": "chat",
+      "name": "非流式: 基础对话",
+      "passed": true,
+      "duration_ms": 3732.9,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_C02",
+      "module": "chat",
+      "name": "非流式: 天气工具调用",
+      "passed": true,
+      "duration_ms": 6645.2,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_C03",
+      "module": "chat",
+      "name": "未知模型 → 400",
+      "passed": true,
+      "duration_ms": 6.6,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_C04",
+      "module": "chat",
+      "name": "不存在会话 → 404",
+      "passed": true,
+      "duration_ms": 6.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_C05",
+      "module": "chat",
+      "name": "SSE: 文本回复含 text 事件",
+      "passed": true,
+      "duration_ms": 2951.7,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_C06",
+      "module": "chat",
+      "name": "SSE: 工具调用含完整事件",
+      "passed": true,
+      "duration_ms": 8613.3,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_C07",
+      "module": "chat",
+      "name": "SSE: DeepSeek V4 流式回复",
+      "passed": false,
+      "duration_ms": 3321.5,
+      "error": "DeepSeek 流式事件: {'error', 'done'}",
+      "detail": {}
+    },
+    {
+      "id": "e2e_C08",
+      "module": "chat",
+      "name": "SSE: 客户端断开不崩溃",
+      "passed": true,
+      "duration_ms": 10837.4,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_U01",
+      "module": "usage",
+      "name": "额度查询含全部类型",
+      "passed": true,
+      "duration_ms": 2054.5,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_U02",
+      "module": "usage",
+      "name": "额度限制值合理",
+      "passed": true,
+      "duration_ms": 7.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_I01",
+      "module": "image",
+      "name": "提交生图任务 → task_id",
+      "passed": true,
+      "duration_ms": 727.6,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_I02",
+      "module": "image",
+      "name": "查询生图任务状态",
+      "passed": true,
+      "duration_ms": 384.6,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_I03",
+      "module": "image",
+      "name": "空 prompt → 400",
+      "passed": true,
+      "duration_ms": 5.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_E01",
+      "module": "edge",
+      "name": "空 messages → 400",
+      "passed": true,
+      "duration_ms": 6.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_E02",
+      "module": "edge",
+      "name": "非法 JSON → 4xx",
+      "passed": true,
+      "duration_ms": 3.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_E03",
+      "module": "edge",
+      "name": "超长消息不崩溃",
+      "passed": true,
+      "duration_ms": 4848.5,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_E04",
+      "module": "edge",
+      "name": "CORS 预检不报错",
+      "passed": true,
+      "duration_ms": 3.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_E05",
+      "module": "edge",
+      "name": "错误方法 → 4xx",
+      "passed": true,
+      "duration_ms": 2.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_E06",
+      "module": "edge",
+      "name": "SQL 注入 → 401 而非 500",
+      "passed": true,
+      "duration_ms": 7.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_E07",
+      "module": "edge",
+      "name": "XSS payload → 非 500",
+      "passed": true,
+      "duration_ms": 6.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_E08",
+      "module": "edge",
+      "name": "响应含 X-Trace-Id",
+      "passed": true,
+      "duration_ms": 2.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_MT01",
+      "module": "multiturn",
+      "name": "创建多轮对话会话",
+      "passed": true,
+      "duration_ms": 8.4,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_MT02",
+      "module": "multiturn",
+      "name": "第1轮: 设置上下文事实",
+      "passed": true,
+      "duration_ms": 2436.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_MT03",
+      "module": "multiturn",
+      "name": "第2轮: 验证上下文记忆",
+      "passed": true,
+      "duration_ms": 2839.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_MT04",
+      "module": "multiturn",
+      "name": "第3轮: 工具调用正常",
+      "passed": true,
+      "duration_ms": 4645.9,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_MT05",
+      "module": "multiturn",
+      "name": "切换模型: DeepSeek V4",
+      "passed": false,
+      "duration_ms": 768.4,
+      "error": "DeepSeek 无回复",
+      "detail": {}
+    },
+    {
+      "id": "e2e_MT06",
+      "module": "multiturn",
+      "name": "切回 Qwen3: 上下文仍保留",
+      "passed": true,
+      "duration_ms": 1545.6,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_IM01",
+      "module": "img_analysis",
+      "name": "创建图片分析会话",
+      "passed": true,
+      "duration_ms": 8.7,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_IM02",
+      "module": "img_analysis",
+      "name": "上传图片 → 触发 analyze_image",
+      "passed": true,
+      "duration_ms": 14693.3,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_IM03",
+      "module": "img_analysis",
+      "name": "引用上文图片 (上下文)",
+      "passed": true,
+      "duration_ms": 4672.2,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_IM04",
+      "module": "img_analysis",
+      "name": "上传多张图片",
+      "passed": true,
+      "duration_ms": 22479.7,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_GA01",
+      "module": "img_chain",
+      "name": "创建生图链会话",
+      "passed": true,
+      "duration_ms": 10.3,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_GA02",
+      "module": "img_chain",
+      "name": "SSE: 生图含 queue/progress/result",
+      "passed": true,
+      "duration_ms": 35647.7,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_GA03",
+      "module": "img_chain",
+      "name": "分析刚生成的图片",
+      "passed": true,
+      "duration_ms": 27789.1,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_GA04",
+      "module": "img_chain",
+      "name": "编辑上文图片 → edit_image",
+      "passed": true,
+      "duration_ms": 20012.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_BR01",
+      "module": "branch",
+      "name": "创建分支测试会话",
+      "passed": true,
+      "duration_ms": 17.3,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_BR02",
+      "module": "branch",
+      "name": "send: 消息正确存储+可查询",
+      "passed": true,
+      "duration_ms": 2636.1,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_BR03",
+      "module": "branch",
+      "name": "regenerate: 创建兄弟分支",
+      "passed": true,
+      "duration_ms": 1326.5,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_BR04",
+      "module": "branch",
+      "name": "验证: 兄弟节点 content 不同",
+      "passed": true,
+      "duration_ms": 12.5,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_BR05",
+      "module": "branch",
+      "name": "reedit: 新建 user+asst 分支",
+      "passed": true,
+      "duration_ms": 3652.8,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_BR06",
+      "module": "branch",
+      "name": "子分支: 在 regenerate 下继续对话",
+      "passed": true,
+      "duration_ms": 5368.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_CI01",
+      "module": "ctx_iso",
+      "name": "创建隔离测试会话",
+      "passed": true,
+      "duration_ms": 12.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_CI02",
+      "module": "ctx_iso",
+      "name": "构建Python分支",
+      "passed": true,
+      "duration_ms": 2927.3,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_CI03",
+      "module": "ctx_iso",
+      "name": "Regenerate: Python兄弟分支",
+      "passed": true,
+      "duration_ms": 2559.1,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_CI04",
+      "module": "ctx_iso",
+      "name": "Python子分支: 在asst2下继续对话",
+      "passed": true,
+      "duration_ms": 11072.9,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_CI05",
+      "module": "ctx_iso",
+      "name": "构建Java分支 (reedit, parent=null)",
+      "passed": true,
+      "duration_ms": 2817.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_CI06",
+      "module": "ctx_iso",
+      "name": "★ Python子分支不含Java污染 ★",
+      "passed": true,
+      "duration_ms": 1541.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_CI07",
+      "module": "ctx_iso",
+      "name": "★ Java分支不含Python污染 ★",
+      "passed": true,
+      "duration_ms": 1780.7,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_CI08",
+      "module": "ctx_iso",
+      "name": "★ asst1兄弟不包含asst2子分支 ★",
+      "passed": true,
+      "duration_ms": 1534.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_CI09",
+      "module": "ctx_iso",
+      "name": "树结构完整性: 无孤儿 兄弟数正确",
+      "passed": true,
+      "duration_ms": 8.9,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_IC01",
+      "module": "img_ctx",
+      "name": "创建图片上下文会话",
+      "passed": true,
+      "duration_ms": 9.6,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_IC02",
+      "module": "img_ctx",
+      "name": "上传图1: URL持久化到messages",
+      "passed": true,
+      "duration_ms": 32698.5,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_IC03",
+      "module": "img_ctx",
+      "name": "上传图2: 两张图都在消息中",
+      "passed": true,
+      "duration_ms": 11466.3,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_IC04",
+      "module": "img_ctx",
+      "name": "中间插入纯文本对话",
+      "passed": true,
+      "duration_ms": 3429.3,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_IC05",
+      "module": "img_ctx",
+      "name": "★ 多轮后LLM感知历史图片 ★",
+      "passed": true,
+      "duration_ms": 2769.6,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_IC06",
+      "module": "img_ctx",
+      "name": "★ 图片存储格式: content数组含image_url ★",
+      "passed": true,
+      "duration_ms": 13.0,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_IC07",
+      "module": "img_ctx",
+      "name": "★ 多轮文本后analyze_image仍可用 ★",
+      "passed": true,
+      "duration_ms": 20147.2,
+      "error": "",
+      "detail": {}
+    },
+    {
+      "id": "e2e_CX01",
+      "module": "cleanup",
+      "name": "删除会话+确认不可访问",
+      "passed": true,
+      "duration_ms": 29.0,
+      "error": "",
+      "detail": {}
+    }
+  ]
+}

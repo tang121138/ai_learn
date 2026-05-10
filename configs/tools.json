@@ -1,0 +1,15 @@
+{
+  "categories": {
+    "基础工具": ["calculate", "get_current_time", "calculate_date", "days_between", "weekday"],
+    "网络工具": ["get_weather", "http_get", "http_post"],
+    "文件工具": ["list_directory", "read_file", "write_file", "search_files"],
+    "系统工具": ["get_system_info", "get_env_var", "get_process_info"],
+    "AI工具": ["analyze_image", "generate_image", "edit_image"],
+    "数据工具": ["sql_query", "generate_chart", "read_excel", "write_excel"]
+  },
+  "tool_settings": {
+    "file_ops": { "max_read_size": 5000 },
+    "image_gen": { "timeout": 60, "default_size": "1024x1024" },
+    "weather": { "api_url": "https://wttr.in/{city}?format=3" }
+  }
+}

@@ -1,0 +1,141 @@
+{
+  "name": "tool_calling",
+  "version": "1.0",
+  "cases": [
+    {
+      "id": "tc_001",
+      "category": "weather",
+      "input": "北京今天天气怎么样？",
+      "expected_tool": "get_weather",
+      "expected_args": {"city": "Beijing"},
+      "expected_keywords": ["天气", "温度"],
+      "min_response_length": 20,
+      "max_latency_ms": 15000
+    },
+    {
+      "id": "tc_002",
+      "category": "weather",
+      "input": "What's the weather in Tokyo?",
+      "expected_tool": "get_weather",
+      "expected_args": {"city": "Tokyo"},
+      "expected_keywords": ["weather", "Tokyo"],
+      "min_response_length": 15,
+      "max_latency_ms": 15000
+    },
+    {
+      "id": "tc_003",
+      "category": "calculator",
+      "input": "计算 123 * 456 + 789 的结果",
+      "expected_tool": "calculate",
+      "expected_args": {"expression": "123*456+789"},
+      "expected_keywords": ["56877"],
+      "min_response_length": 10,
+      "max_latency_ms": 10000
+    },
+    {
+      "id": "tc_004",
+      "category": "calculator",
+      "input": "sqrt(2) 是多少？",
+      "expected_tool": "calculate",
+      "expected_args": {"expression": "sqrt(2)"},
+      "expected_keywords": ["1.414"],
+      "max_latency_ms": 10000
+    },
+    {
+      "id": "tc_005",
+      "category": "datetime",
+      "input": "现在是几点？",
+      "expected_tool": "get_current_time",
+      "expected_keywords": ["年", "月", "日"],
+      "min_response_length": 10,
+      "max_latency_ms": 10000
+    },
+    {
+      "id": "tc_006",
+      "category": "datetime",
+      "input": "2026年1月1日是星期几？",
+      "expected_tool": "weekday",
+      "expected_args": {"date_str": "2026-01-01"},
+      "expected_keywords": ["周四", "星期四"],
+      "max_latency_ms": 10000
+    },
+    {
+      "id": "tc_007",
+      "category": "datetime",
+      "input": "从今天算起，100天后是几号？",
+      "expected_tool": "calculate_date",
+      "expected_args": {"days": 100},
+      "expected_keywords": [],
+      "min_response_length": 5,
+      "max_latency_ms": 10000
+    },
+    {
+      "id": "tc_008",
+      "category": "general",
+      "input": "你好，请介绍一下你自己",
+      "expected_tool": null,
+      "expected_keywords": ["助手", "AI", "帮助"],
+      "min_response_length": 20,
+      "max_latency_ms": 10000
+    },
+    {
+      "id": "tc_009",
+      "category": "general",
+      "input": "给我讲个笑话",
+      "expected_tool": null,
+      "expected_keywords": [],
+      "min_response_length": 10,
+      "max_latency_ms": 10000
+    },
+    {
+      "id": "tc_010",
+      "category": "weather",
+      "input": "上海明天会下雨吗？",
+      "expected_tool": "get_weather",
+      "expected_args": {"city": "Shanghai"},
+      "expected_keywords": ["天气"],
+      "max_latency_ms": 15000
+    },
+    {
+      "id": "tc_011",
+      "category": "system",
+      "input": "查看当前系统信息",
+      "expected_tool": "get_system_info",
+      "expected_keywords": ["系统", "Python"],
+      "max_latency_ms": 10000
+    },
+    {
+      "id": "tc_012",
+      "category": "calculator",
+      "input": "(15 + 27) * (88 - 63) 等于多少？",
+      "expected_tool": "calculate",
+      "expected_keywords": ["1050"],
+      "max_latency_ms": 10000
+    },
+    {
+      "id": "tc_013",
+      "category": "datetime",
+      "input": "2025年春节和2026年春节相隔多少天？",
+      "expected_tool": "days_between",
+      "expected_args": {"date1": "2025-01-29", "date2": "2026-02-17"},
+      "expected_keywords": ["384"],
+      "max_latency_ms": 10000
+    },
+    {
+      "id": "tc_014",
+      "category": "http",
+      "input": "发送一个GET请求到 https://httpbin.org/get",
+      "expected_tool": "http_get",
+      "expected_args": {"url": "https://httpbin.org/get"},
+      "max_latency_ms": 15000
+    },
+    {
+      "id": "tc_015",
+      "category": "file_ops",
+      "input": "列出当前目录下的文件",
+      "expected_tool": "list_directory",
+      "expected_keywords": [],
+      "max_latency_ms": 10000
+    }
+  ]
+}

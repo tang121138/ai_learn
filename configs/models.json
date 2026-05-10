@@ -1,0 +1,49 @@
+[
+  {
+    "id": "Qwen/Qwen3-30B-A3B",
+    "name": "Qwen3-30B",
+    "provider": "modelscope",
+    "type": "text",
+    "context_window": 32768,
+    "multimodal": false,
+    "description": "魔搭 Qwen3-30B，主力文本对话模型"
+  },
+  {
+    "id": "deepseek-v4-flash",
+    "name": "DeepSeek V4 Flash",
+    "provider": "deepseek",
+    "type": "text",
+    "context_window": 65536,
+    "multimodal": false,
+    "description": "DeepSeek V4 Flash，支持思考链",
+    "api_key_env": "DEEPSEEK_API_KEY",
+    "base_url_env": "DEEPSEEK_BASE_URL"
+  },
+  {
+    "id": "Qwen/Qwen3.5-397B-A17B",
+    "name": "Qwen3.5-VL",
+    "provider": "modelscope",
+    "type": "multimodal",
+    "context_window": 131072,
+    "multimodal": true,
+    "description": "魔搭 Qwen3.5-VL，多模态图片分析"
+  },
+  {
+    "id": "Tongyi-MAI/Z-Image-Turbo",
+    "name": "Z-Image-Turbo",
+    "provider": "modelscope",
+    "type": "image_gen",
+    "context_window": 0,
+    "multimodal": false,
+    "description": "魔搭 Z-Image-Turbo，高效文生图"
+  },
+  {
+    "id": "Qwen/Qwen-Image-Edit-2511",
+    "name": "Qwen-Image-Edit",
+    "provider": "modelscope",
+    "type": "image_edit",
+    "context_window": 0,
+    "multimodal": false,
+    "description": "魔搭 Qwen-Image-Edit-2511，图像编辑模型"
+  }
+]
