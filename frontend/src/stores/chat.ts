@@ -63,27 +63,10 @@ export const useChatStore = defineStore('chat', () => {
   let _idCounter = 0
   function _tmpId(): string { return '_tmp_' + (++_idCounter) }
 
-  async function send(sessionId: string, content: string | any[], modelId: string) {
+  function _createSSEHandler() {
     const sessionStore = useSessionStore()
-    isStreaming.value = true
-    streamingContent.value = ''
-    pendingTools.value = []
-
-    // parent_id = 当前活跃叶节点
-    currentParentId = sessionStore.activeLeafId
-
-    const userMsgId = _tmpId()
-    const asstMsgId = _tmpId()
-
-    sessionStore.addMessage({ id: userMsgId, role: 'user', content, _parentId: currentParentId })
-    sessionStore.addMessage({ id: asstMsgId, role: 'assistant', content: '', _parentId: userMsgId })
-
-    const mcpStore = useMcpStore()
-    const enabledMcp = mcpStore.mcpEnabled ? [...mcpStore.selectedServers] : []
-
-    abortController = sendMessage(
-      sessionId, content, modelId,
-      (event: SSEEvent) => {
+    return {
+      onEvent(event: SSEEvent) {
         switch (event.type) {
           case 'text': pushToBuffer(event.content || ''); break
           case 'reasoning':
@@ -113,16 +96,36 @@ export const useChatStore = defineStore('chat', () => {
             break
         }
       },
-      (err: string) => {
+      onError(err: string) {
         isStreaming.value = false; stopTypewriter()
         sessionStore.updateLastAssistant('\n\n[连接错误: ' + err + ']')
       },
-      () => {
+      onDone() {
         stopTypewriter(); flushTypewriter()
         isStreaming.value = false; streamingContent.value = ''; reasoningContent.value = ''; pendingTools.value = []
       },
-      currentParentId,
-      enabledMcp,
+    }
+  }
+
+  async function send(sessionId: string, content: string | any[], modelId: string) {
+    const sessionStore = useSessionStore()
+    isStreaming.value = true
+    streamingContent.value = ''
+    pendingTools.value = []
+    currentParentId = sessionStore.activeLeafId
+
+    const userMsgId = _tmpId()
+    sessionStore.addMessage({ id: userMsgId, role: 'user', content, _parentId: currentParentId })
+    sessionStore.addMessage({ id: _tmpId(), role: 'assistant', content: '', _parentId: userMsgId })
+
+    const mcpStore = useMcpStore()
+    const enabledMcp = mcpStore.mcpEnabled ? [...mcpStore.selectedServers] : []
+    const handler = _createSSEHandler()
+
+    abortController = sendMessage(
+      sessionId, content, modelId,
+      handler.onEvent, handler.onError, handler.onDone,
+      currentParentId, enabledMcp,
     )
   }
 
@@ -133,57 +136,16 @@ export const useChatStore = defineStore('chat', () => {
     reasoningContent.value = ''
     pendingTools.value = []
 
-    // regenerate: 新回复和原回复共享同一用户消息为 parent (兄弟关系)
     const userMsg = sessionStore.messages.find(m => m.id === msgId)
-    if (!userMsg) { isStreaming.value = false; return }
-    const content = userMsg.content
-    if (!content) { isStreaming.value = false; return }
-
-    // 新回复的 parent = 用户消息本身 (新 asst 是原 asst 的兄弟)
+    if (!userMsg || !userMsg.content) { isStreaming.value = false; return }
     currentParentId = msgId
 
-    const asstMsgId = _tmpId()
-    sessionStore.addMessage({ id: asstMsgId, role: 'assistant', content: '', _parentId: msgId })
+    sessionStore.addMessage({ id: _tmpId(), role: 'assistant', content: '', _parentId: msgId })
 
+    const handler = _createSSEHandler()
     abortController = sendMessage(
-      sessionStore.currentSessionId!, content, currentModelId.value || 'Qwen/Qwen3-30B-A3B',
-      (event: SSEEvent) => {
-        switch (event.type) {
-          case 'text': pushToBuffer(event.content || ''); break
-          case 'reasoning':
-            reasoningContent.value += event.content || ''
-            sessionStore.updateLastAssistantReasoning(event.content || '')
-            break
-          case 'tool_call': {
-            const name = event.function?.name || 'unknown'
-            pendingTools.value.push({ name, args: event.function?.arguments || '' })
-            if (name === 'generate_image') {
-              try { sessionStore.addImagePlaceholder(JSON.parse(event.function?.arguments || '{}').prompt || '') }
-              catch { sessionStore.addImagePlaceholder('生成中...') }
-            }
-            break
-          }
-          case 'tool_result':
-            if (event.content?.startsWith('生图成功')) {
-              const urlMatch = event.content.match(/https?:\/\/\S+/)
-              if (urlMatch) sessionStore.replaceLastPlaceholder(urlMatch[0])
-            }
-            pendingTools.value = pendingTools.value.slice(1)
-            break
-          case 'error':
-            stopTypewriter()
-            sessionStore.updateLastAssistant('\n\n[错误: ' + (event.content || '') + ']')
-            break
-        }
-      },
-      (err: string) => {
-        isStreaming.value = false; stopTypewriter()
-        sessionStore.updateLastAssistant('\n\n[连接错误: ' + err + ']')
-      },
-      () => {
-        stopTypewriter(); flushTypewriter()
-        isStreaming.value = false; streamingContent.value = ''; reasoningContent.value = ''; pendingTools.value = []
-      },
+      sessionStore.currentSessionId!, userMsg.content, currentModelId.value || 'Qwen/Qwen3-30B-A3B',
+      handler.onEvent, handler.onError, handler.onDone,
       currentParentId,
     )
   }
@@ -195,58 +157,18 @@ export const useChatStore = defineStore('chat', () => {
     reasoningContent.value = ''
     pendingTools.value = []
 
-    // reedit: 新用户消息和原用户消息共享同一 parent (兄弟关系)
     const origMsg = sessionStore.messages.find(m => m.id === msgId)
     if (!origMsg) { isStreaming.value = false; return }
-
-    // 新用户消息的 parent = 原用户消息的 parent
     currentParentId = origMsg._parentId ?? null
 
     const userMsgId = _tmpId()
-    const asstMsgId = _tmpId()
-
     sessionStore.addMessage({ id: userMsgId, role: 'user', content: newContent, _parentId: currentParentId })
-    sessionStore.addMessage({ id: asstMsgId, role: 'assistant', content: '', _parentId: userMsgId })
+    sessionStore.addMessage({ id: _tmpId(), role: 'assistant', content: '', _parentId: userMsgId })
 
+    const handler = _createSSEHandler()
     abortController = sendMessage(
       sessionStore.currentSessionId!, newContent, currentModelId.value || 'Qwen/Qwen3-30B-A3B',
-      (event: SSEEvent) => {
-        switch (event.type) {
-          case 'text': pushToBuffer(event.content || ''); break
-          case 'reasoning':
-            reasoningContent.value += event.content || ''
-            sessionStore.updateLastAssistantReasoning(event.content || '')
-            break
-          case 'tool_call': {
-            const name = event.function?.name || 'unknown'
-            pendingTools.value.push({ name, args: event.function?.arguments || '' })
-            if (name === 'generate_image') {
-              try { sessionStore.addImagePlaceholder(JSON.parse(event.function?.arguments || '{}').prompt || '') }
-              catch { sessionStore.addImagePlaceholder('生成中...') }
-            }
-            break
-          }
-          case 'tool_result':
-            if (event.content?.startsWith('生图成功')) {
-              const urlMatch = event.content.match(/https?:\/\/\S+/)
-              if (urlMatch) sessionStore.replaceLastPlaceholder(urlMatch[0])
-            }
-            pendingTools.value = pendingTools.value.slice(1)
-            break
-          case 'error':
-            stopTypewriter()
-            sessionStore.updateLastAssistant('\n\n[错误: ' + (event.content || '') + ']')
-            break
-        }
-      },
-      (err: string) => {
-        isStreaming.value = false; stopTypewriter()
-        sessionStore.updateLastAssistant('\n\n[连接错误: ' + err + ']')
-      },
-      () => {
-        stopTypewriter(); flushTypewriter()
-        isStreaming.value = false; streamingContent.value = ''; reasoningContent.value = ''; pendingTools.value = []
-      },
+      handler.onEvent, handler.onError, handler.onDone,
       currentParentId,
     )
   }

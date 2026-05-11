@@ -1,7 +1,8 @@
 import json
+import re
 import time
+import traceback
 import asyncio
-from openai import OpenAI
 
 from backend.logger import get_logger, get_trace, audit_chat_completion, audit_tool_exec, audit_quota_check
 from backend.config import MODELSCOPE_API_KEY
@@ -67,14 +68,24 @@ def _get_quota_degradation(api_type: str) -> str | None:
     return degradations.get(api_type)
 
 
+_system_prompt_cache: str | None = None
+_system_prompt_mtime: float = 0
+
+
 def _load_system_prompt() -> str:
-    """从配置文件或环境变量加载系统提示词"""
+    """从配置文件或环境变量加载系统提示词 (带 mtime 缓存)"""
     import os
+    global _system_prompt_cache, _system_prompt_mtime
     config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
                                "configs", "system_prompt.txt")
     try:
+        mtime = os.path.getmtime(config_path)
+        if _system_prompt_cache is not None and mtime <= _system_prompt_mtime:
+            return _system_prompt_cache
         with open(config_path, "r", encoding="utf-8") as f:
-            return f.read().strip()
+            _system_prompt_cache = f.read().strip()
+        _system_prompt_mtime = mtime
+        return _system_prompt_cache
     except FileNotFoundError:
         pass
     return os.getenv("SYSTEM_PROMPT", SYSTEM_PROMPT)
@@ -197,7 +208,7 @@ class AgentService:
             yield {"type": "error", "content": f"今日文本调用次数已用完。{suggestion}"}
             return
 
-        client = model_manager.get_client(model_id, user_id=user_id)
+        client = model_manager.get_async_client(model_id, user_id=user_id)
         model_config = model_manager.get_config(model_id)
         actual_model = model_config.id
 
@@ -249,11 +260,28 @@ class AgentService:
         usage_tracker.log_usage(user_id, "text", actual_model, tokens=token_usage)
         logger.debug(f"[步骤3/6] Token管理: estimated={token_usage} trimmed={len(messages_api)}msgs")
 
+        # ── RAG: 从知识库检索相关内容注入系统提示 ──
+        try:
+            from backend.rag.rag_service import rag_service
+            from backend.rag.config import SIMILARITY_THRESHOLD as RAG_THRESHOLD
+            query_text = text_content or llm_text
+            rag_results = await rag_service.search(query_text, user_id=user_id, top_k=3)
+            if rag_results:
+                knowledge = "\n\n以下是与用户问题相关的知识库内容:\n"
+                for i, r in enumerate(rag_results, 1):
+                    knowledge += f"\n[{i}] (来源:{r['metadata'].get('filename','')}, 相似度:{r['similarity']:.2f})\n{r['text']}"
+                knowledge += "\n\n请参考以上信息回答用户问题。如果不相关请忽略。"
+                if messages_api and messages_api[0]["role"] == "system":
+                    messages_api[0]["content"] += knowledge
+                logger.debug(f"RAG: 注入 {len(rag_results)} 条知识片段")
+        except Exception:
+            pass  # RAG 失败不影响主流程
+
         logger.info(f"调用LLM: {actual_model} (工具:{len(self.tools)})")
         logger.debug(f"[步骤4/6] LLM调用开始 model={actual_model}")
         try:
             while True:
-                response = client.chat.completions.create(
+                response = await client.chat.completions.create(
                     model=actual_model,
                     messages=messages_api,
                     tools=self.tools,
@@ -266,7 +294,7 @@ class AgentService:
                 collected_reasoning = ""
                 collected_tool_calls = []
 
-                for chunk in response:
+                async for chunk in response:
                     if not chunk.choices:
                         continue
                     delta = chunk.choices[0].delta
@@ -383,24 +411,14 @@ class AgentService:
 
                     if func_name == "analyze_image":
                         usage_tracker.log_usage(user_id, "multimodal", "multimodal")
-                    elif func_name == "generate_image":
+                    elif func_name in ("generate_image", "edit_image"):
                         usage_tracker.log_usage(user_id, "image_gen", "image_gen")
-                        # 将生图结果 URL 存入图片缓存 (供后续 edit_image 引用)
-                        import re
-                        url_match = re.search(r'https?://\S+', str(result_text))
-                        if url_match:
-                            from tools.multimodal import _session_images
-                            _session_images.setdefault(session_id, []).append(url_match.group())
-                    elif func_name == "edit_image":
-                        # 编辑结果同样存入缓存
-                        import re
                         url_match = re.search(r'https?://\S+', str(result_text))
                         if url_match:
                             from tools.multimodal import _session_images
                             _session_images.setdefault(session_id, []).append(url_match.group())
 
         except Exception as e:
-            import traceback
             logger.error(f"Agent异常: model={actual_model} err={e}\n{traceback.format_exc()}")
             yield {"type": "error", "content": f"{type(e).__name__}: {e}"}
 

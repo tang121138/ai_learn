@@ -1,5 +1,5 @@
 import os
-from openai import OpenAI
+from openai import OpenAI, AsyncOpenAI
 
 from backend.logger import get_logger
 from backend.config import (
@@ -50,6 +50,7 @@ class ModelManager:
     def __init__(self):
         self._models: dict[str, ModelConfig] = {}
         self._clients: dict[str, OpenAI] = {}
+        self._async_clients: dict[str, AsyncOpenAI] = {}
         self._default_id: str = ""
         self._user_keys_cache: dict[str, dict[str, dict]] = {}  # user_id→{provider→{api_key,base_url}}
 
@@ -64,19 +65,59 @@ class ModelManager:
         logger.info(f"已加载 {len(self._models)} 个模型，默认: {self._default_id}")
 
     def set_user_keys(self, user_id: str, keys: dict[str, dict]):
-        """注入当前用户的 API Key (from DB) — 每请求调用一次"""
+        """注入当前用户的 API Key (from DB) — 每请求调用一次，同步到 Redis"""
         if keys:
             self._user_keys_cache[user_id] = keys
+            self._cache_to_redis(user_id, keys)
+
+    def _cache_to_redis(self, user_id: str, keys: dict):
+        try:
+            from backend.services.redis_client import redis_client
+            if redis_client.enabled:
+                import asyncio, json
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    loop.create_task(
+                        redis_client.setex(f"keys:{user_id}", 300, json.dumps(keys)))
+        except Exception:
+            pass
 
     def clear_user_keys(self, user_id: str):
         self._user_keys_cache.pop(user_id, None)
+        try:
+            from backend.services.redis_client import redis_client
+            if redis_client.enabled:
+                import asyncio
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    loop.create_task(redis_client.delete(f"keys:{user_id}"))
+        except Exception:
+            pass
 
     def _get_key_for_provider(self, user_id: str | None, provider: str) -> tuple[str, str]:
-        """返回 (api_key, base_url) — 优先用户 Key，回退全局 .env"""
-        if user_id and user_id in self._user_keys_cache:
-            uk = self._user_keys_cache[user_id].get(provider, {})
-            if uk.get("api_key"):
-                return uk["api_key"], uk.get("base_url", "") or MODELSCOPE_BASE_URL
+        """返回 (api_key, base_url) — 优先 Redis → 内存缓存 → 全局 .env"""
+        if user_id:
+            # 优先内存缓存
+            if user_id in self._user_keys_cache:
+                uk = self._user_keys_cache[user_id].get(provider, {})
+                if uk.get("api_key"):
+                    return uk["api_key"], uk.get("base_url", "") or MODELSCOPE_BASE_URL
+            # 回退 Redis
+            try:
+                from backend.services.redis_client import redis_client
+                if redis_client.enabled:
+                    import asyncio, json
+                    try:
+                        data = asyncio.run(redis_client.get(f"keys:{user_id}"))
+                        if data:
+                            keys = json.loads(data)
+                            uk = keys.get(provider, {})
+                            if uk.get("api_key"):
+                                return uk["api_key"], uk.get("base_url", "") or MODELSCOPE_BASE_URL
+                    except RuntimeError:
+                        pass
+            except ImportError:
+                pass
         return "", ""
 
     def _build_client(self, mc: ModelConfig, user_id: str | None = None) -> OpenAI:
@@ -93,6 +134,19 @@ class ModelManager:
             raise ValueError(f"模型 {mc.id} 需要 API Key: 请在设置中配置 {mc.provider} 的 Key")
         return OpenAI(api_key=api_key, base_url=base_url)
 
+    def _build_async_client(self, mc: ModelConfig, user_id: str | None = None) -> AsyncOpenAI:
+        user_key, user_url = self._get_key_for_provider(user_id, mc.provider)
+        if user_key:
+            api_key = user_key
+            base_url = user_url or mc.base_url
+        else:
+            api_key = mc.api_key
+            base_url = mc.base_url
+
+        if not api_key:
+            raise ValueError(f"模型 {mc.id} 需要 API Key: 请在设置中配置 {mc.provider} 的 Key")
+        return AsyncOpenAI(api_key=api_key, base_url=base_url)
+
     def get_client(self, model_id: str | None = None, user_id: str | None = None) -> OpenAI:
         model_id = model_id or self._default_id
         mc = self._models.get(model_id)
@@ -103,6 +157,18 @@ class ModelManager:
         if cache_key not in self._clients:
             self._clients[cache_key] = self._build_client(mc, user_id)
         return self._clients[cache_key]
+
+    def get_async_client(self, model_id: str | None = None, user_id: str | None = None) -> AsyncOpenAI:
+        """返回 AsyncOpenAI 客户端 — 用于 async 流式调用"""
+        model_id = model_id or self._default_id
+        mc = self._models.get(model_id)
+        if not mc:
+            raise ValueError(f"未知模型: {model_id}")
+        user_key, _ = self._get_key_for_provider(user_id, mc.provider)
+        cache_key = f"async|{mc.provider}|{user_id or 'default'}|{user_key[:8] if user_key else 'env'}"
+        if cache_key not in self._async_clients:
+            self._async_clients[cache_key] = self._build_async_client(mc, user_id)
+        return self._async_clients[cache_key]
 
     def get_config(self, model_id: str | None) -> ModelConfig:
         if model_id and model_id in self._models:

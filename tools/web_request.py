@@ -1,10 +1,30 @@
 import requests
 import json as json_mod
+import socket
+import ipaddress
+from urllib.parse import urlparse
+
+
+def _validate_url(url: str) -> None:
+    """防御 SSRF: 拒绝私有/内网/回环地址"""
+    parsed = urlparse(url)
+    if parsed.hostname is None:
+        raise PermissionError(f"无法解析 URL 主机名: {url}")
+    try:
+        ip = socket.gethostbyname(parsed.hostname)
+    except socket.gaierror:
+        raise PermissionError(f"DNS 解析失败: {parsed.hostname}")
+    addr = ipaddress.ip_address(ip)
+    if addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_multicast:
+        raise PermissionError(f"禁止访问内网地址: {ip}")
+    if ip == "0.0.0.0":
+        raise PermissionError(f"禁止访问无效地址: {ip}")
 
 
 def http_get(url: str, headers: str = "{}") -> str:
     """发送 HTTP GET 请求"""
     try:
+        _validate_url(url)
         parsed_headers = json_mod.loads(headers) if headers else {}
         resp = requests.get(url, headers=parsed_headers, timeout=10)
         content_type = resp.headers.get("content-type", "")
@@ -28,6 +48,7 @@ def http_get(url: str, headers: str = "{}") -> str:
 def http_post(url: str, body: str = "{}", headers: str = '{"Content-Type": "application/json"}') -> str:
     """发送 HTTP POST 请求"""
     try:
+        _validate_url(url)
         parsed_headers = json_mod.loads(headers) if headers else {}
         resp = requests.post(url, data=body, headers=parsed_headers, timeout=10)
         content_type = resp.headers.get("content-type", "")

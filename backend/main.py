@@ -8,7 +8,7 @@ from typing import Annotated
 
 from backend.logger import setup_logging, get_logger, TraceContext, get_trace
 from backend.middleware.auth import get_current_user
-from backend.routers import auth, sessions, chat, models, images, api_keys
+from backend.routers import auth, sessions, chat, models, images, api_keys, knowledge
 from backend.services.usage_tracker import usage_tracker
 from config import MYSQL_DATABASE
 
@@ -17,9 +17,11 @@ logger = get_logger("main")
 
 app = FastAPI(title="AI Agent 系统 (1号机)", version="0.1.0")
 
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:4000").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -45,6 +47,7 @@ app.include_router(chat.router)
 app.include_router(models.router)
 app.include_router(images.router)
 app.include_router(api_keys.router)
+app.include_router(knowledge.router)
 
 UPLOADS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
 os.makedirs(UPLOADS_DIR, exist_ok=True)
@@ -57,6 +60,10 @@ async def startup():
     from backend.services.tool_queue import tool_queue
     asyncio.create_task(tool_queue.start_worker())
     logger.info("工具 Worker 已调度启动")
+
+    # 初始化 Redis (可选，失败降级)
+    from backend.services.redis_client import redis_client
+    await redis_client.initialize()
 
     from database import init_database, get_connection
     try:

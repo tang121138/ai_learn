@@ -1,12 +1,23 @@
 import uuid
 import hashlib
 import pymysql
+import bcrypt
+from backend.logger import get_logger
 from database import get_connection
+
+logger = get_logger("user")
 
 
 def _hash_password(password: str) -> str:
-    """密码哈希"""
-    return hashlib.sha256(password.encode()).hexdigest()
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+
+def _verify_password(password: str, password_hash: str) -> bool:
+    if password_hash.startswith("$2"):
+        return bcrypt.checkpw(password.encode(), password_hash.encode())
+    # 兼容旧版 SHA-256 哈希
+    legacy_hash = hashlib.sha256(password.encode()).hexdigest()
+    return legacy_hash == password_hash
 
 
 def create_user(username: str, password: str) -> dict | None:
@@ -29,16 +40,30 @@ def create_user(username: str, password: str) -> dict | None:
 
 
 def authenticate_user(username: str, password: str) -> dict | None:
-    """验证用户登录，返回用户信息或 None"""
-    password_hash = _hash_password(password)
+    """验证用户登录 — 支持 bcrypt 和旧版 SHA-256"""
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
             cursor.execute(
-                "SELECT id, username, created_at FROM users WHERE username=%s AND password_hash=%s",
-                (username, password_hash),
+                "SELECT id, username, password_hash, created_at FROM users WHERE username=%s",
+                (username,),
             )
-            return cursor.fetchone()
+            row = cursor.fetchone()
+        if not row:
+            return None
+        if not _verify_password(password, row["password_hash"]):
+            return None
+        # 如果是旧版 SHA-256 哈希，自动升级为 bcrypt
+        if not row["password_hash"].startswith("$2"):
+            new_hash = _hash_password(password)
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE users SET password_hash=%s WHERE id=%s",
+                    (new_hash, row["id"]),
+                )
+            conn.commit()
+            logger.info(f"用户 {username} 密码已升级为 bcrypt")
+        return {"id": row["id"], "username": row["username"], "created_at": row["created_at"]}
     finally:
         conn.close()
 

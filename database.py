@@ -52,6 +52,7 @@ def init_database():
                     id VARCHAR(36) PRIMARY KEY,
                     user_id VARCHAR(36) NOT NULL,
                     title VARCHAR(200) DEFAULT '新会话',
+                    model_id VARCHAR(100) DEFAULT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -74,9 +75,13 @@ def init_database():
                 CREATE TABLE IF NOT EXISTS messages (
                     id VARCHAR(36) PRIMARY KEY,
                     session_id VARCHAR(36) NOT NULL,
+                    parent_id VARCHAR(36) DEFAULT NULL,
                     role ENUM('system', 'user', 'assistant', 'tool') NOT NULL,
-                    content TEXT,
+                    content MEDIUMTEXT,
                     tool_calls JSON,
+                    reasoning_content TEXT DEFAULT NULL,
+                    branch INT DEFAULT 1,
+                    turn_index INT DEFAULT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4

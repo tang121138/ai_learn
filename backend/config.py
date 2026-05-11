@@ -5,9 +5,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # JWT
-JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-change-in-production")
+JWT_SECRET = os.getenv("JWT_SECRET", "")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
+
+if not JWT_SECRET:
+    raise RuntimeError(
+        "JWT_SECRET 未配置! 请在 .env 中设置 JWT_SECRET=<随机安全密钥>"
+    )
 
 # ModelScope API Inference
 MODELSCOPE_API_KEY = os.getenv("MODELSCOPE_API_KEY", "")
@@ -91,3 +96,6 @@ MODEL_CONFIGS = _load_model_configs()
 DAILY_TEXT_LIMIT = int(os.getenv("DAILY_TEXT_LIMIT", "1800"))
 DAILY_MULTIMODAL_LIMIT = int(os.getenv("DAILY_MULTIMODAL_LIMIT", "100"))
 DAILY_IMAGE_GEN_LIMIT = int(os.getenv("DAILY_IMAGE_GEN_LIMIT", "100"))
+
+# Redis
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")

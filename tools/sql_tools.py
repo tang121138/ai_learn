@@ -5,6 +5,19 @@ from backend.logger import get_logger
 
 logger = get_logger("tool.sql")
 
+SQL_SAFE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
+
+
+def _safe_db_path(db_path: str) -> str:
+    """确保数据库文件在允许的目录内"""
+    if db_path == ":memory:":
+        return db_path
+    real = os.path.realpath(os.path.expanduser(db_path))
+    if not real.startswith(SQL_SAFE_DIR) and not real.startswith(
+            os.path.dirname(os.path.dirname(__file__))):
+        raise PermissionError(f"禁止访问该路径的数据库: {db_path}")
+    return real
+
 
 def sql_query(query: str, db_path: str = ":memory:") -> str:
     """执行 SQL 查询（仅允许 SELECT，最多返回 50 行）
@@ -24,8 +37,10 @@ def sql_query(query: str, db_path: str = ":memory:") -> str:
             return f"错误: 查询包含禁止关键字: {kw}"
 
     # 路径解析
-    if db_path != ":memory:" and not os.path.isabs(db_path):
-        db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), db_path)
+    if db_path != ":memory:":
+        db_path = _safe_db_path(db_path)
+        if not os.path.isabs(db_path):
+            db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), db_path)
 
     if db_path != ":memory:" and not os.path.exists(db_path):
         return f"错误: 数据库文件不存在: {db_path}"

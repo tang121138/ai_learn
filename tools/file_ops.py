@@ -71,10 +71,15 @@ def write_file(path: str, content: str) -> str:
 
 
 def search_files(pattern: str) -> str:
-    """在当前目录递归搜索匹配的文件名"""
+    """在当前目录递归搜索匹配的文件名（仅限安全目录内）"""
     try:
         import glob
-        matches = glob.glob(f"**/{pattern}", recursive=True)
+        if ".." in pattern or pattern.startswith("/"):
+            return "错误: 搜索模式不能包含上级目录或绝对路径"
+        base = SAFE_BASE_DIR
+        matches = glob.glob(os.path.join(base, f"**/{pattern}"), recursive=True)
+        # 二次确认所有结果在安全目录内
+        matches = [os.path.relpath(m, base) for m in matches]
         if not matches:
             return f"未找到匹配 '{pattern}' 的文件"
         result = [f"搜索 '{pattern}' 找到 {len(matches)} 个文件:"]

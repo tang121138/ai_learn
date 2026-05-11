@@ -25,6 +25,13 @@ export const useSessionStore = defineStore('session', () => {
   const currentSession = computed(() =>
     sessions.value.find((s) => s.id === currentSessionId.value) || null)
 
+  // messageMap: O(1) 查找表
+  const messageMap = computed(() => {
+    const map = new Map<string, DisplayMessage>()
+    for (const m of messages.value) map.set(m.id, m)
+    return map
+  })
+
   // childrenMap: parentId → 子节点 ID 列表
   const childrenMap = computed(() => {
     const map = new Map<string, string[]>()
@@ -39,13 +46,14 @@ export const useSessionStore = defineStore('session', () => {
     return map
   })
 
-  // 可见消息: 从 activeLeaf 沿 _parentId 链上溯到根，反序
+  // 可见消息: 从 activeLeaf 沿 _parentId 链上溯到根，反序 (O(N) 总复杂度)
   const visibleMessages = computed(() => {
     if (!activeLeafId.value) return []
     const chain: DisplayMessage[] = []
+    const lookup = messageMap.value
     let id: string | null = activeLeafId.value
     while (id) {
-      const msg = messages.value.find(m => m.id === id)
+      const msg = lookup.get(id)
       if (!msg) break
       chain.unshift(msg)
       id = msg._parentId ?? null
@@ -55,12 +63,13 @@ export const useSessionStore = defineStore('session', () => {
 
   // 获取同一 parent 下的所有兄弟节点
   function getSiblings(nodeId: string): DisplayMessage[] {
-    const msg = messages.value.find(m => m.id === nodeId)
+    const lookup = messageMap.value
+    const msg = lookup.get(nodeId)
     if (!msg) return []
     const pid = msg._parentId
     if (!pid) return []
     const childIds = childrenMap.value.get(pid) || []
-    return childIds.map(id => messages.value.find(m => m.id === id)!).filter(Boolean)
+    return childIds.map(id => lookup.get(id)!).filter(Boolean)
   }
 
   // 切换到某个兄弟节点

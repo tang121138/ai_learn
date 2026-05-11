@@ -115,19 +115,54 @@ def load_session_history_raw(session_id: str) -> list[dict]:
 
 
 def build_context(session_id: str, leaf_id: str) -> list[dict]:
-    """从叶节点沿 parent_id 链上溯到根，返回有序上下文 (根→叶)"""
-    all_msgs = load_session_history_raw(session_id)
-    msg_map = {m["id"]: m for m in all_msgs}
-    chain = []
-    current = leaf_id
-    while current:
-        msg = msg_map.get(current)
-        if not msg:
-            break
-        chain.append(msg)
-        current = msg.get("parent_id")
-    chain.reverse()
-    return chain
+    """从叶节点沿 parent_id 链上溯到根，返回有序上下文 (根→叶)。
+    使用 MySQL WITH RECURSIVE 替代全量加载后 Python 遍历。"""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                WITH RECURSIVE msg_chain AS (
+                    SELECT id, role, content, tool_calls, reasoning_content,
+                           branch, turn_index, parent_id, created_at
+                    FROM messages
+                    WHERE id = %s
+                    UNION ALL
+                    SELECT m.id, m.role, m.content, m.tool_calls,
+                           m.reasoning_content, m.branch, m.turn_index,
+                           m.parent_id, m.created_at
+                    FROM messages m
+                    INNER JOIN msg_chain c ON m.id = c.parent_id
+                )
+                SELECT * FROM msg_chain ORDER BY created_at ASC
+            """, (leaf_id,))
+            rows = cursor.fetchall()
+    finally:
+        conn.close()
+
+    messages = []
+    for row in rows:
+        content = _deserialize_content(row["content"])
+        reasoning = row.get("reasoning_content") or ""
+        msg_id = row["id"]
+        pid = row.get("parent_id")
+        branch = row.get("branch", 1)
+        turn_idx = row.get("turn_index")
+        base = {"id": msg_id, "parent_id": pid, "branch": branch, "turn_index": turn_idx}
+
+        if row["role"] == "tool":
+            messages.append({**base, "role": "tool", "content": content})
+        elif row["tool_calls"]:
+            msg = {**base, "role": row["role"], "content": content,
+                   "tool_calls": json.loads(row["tool_calls"])}
+            if reasoning:
+                msg["reasoning_content"] = reasoning
+            messages.append(msg)
+        else:
+            msg = {**base, "role": row["role"], "content": content}
+            if reasoning and row["role"] == "assistant":
+                msg["reasoning_content"] = reasoning
+            messages.append(msg)
+    return messages
 
 
 def message_to_api_format(msg: dict) -> dict:

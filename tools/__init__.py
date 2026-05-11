@@ -24,6 +24,10 @@ from tools.image_edit import edit_image, tool_def as image_edit_tool_def
 from tools.sql_tools import sql_query, tool_def as sql_tool_def
 from tools.chart_tools import generate_chart, tool_def as chart_tool_def
 from tools.excel_tools import read_excel, write_excel, tool_defs as excel_tool_defs
+from tools.rag_tools import (
+    search_knowledge, upload_document, list_documents, delete_document,
+    tool_defs as rag_tool_defs,
+)
 
 # 函数名 → 实际函数映射
 function_map = {
@@ -49,6 +53,10 @@ function_map = {
     "generate_chart": generate_chart,
     "read_excel": read_excel,
     "write_excel": write_excel,
+    "search_knowledge": search_knowledge,
+    "upload_document": upload_document,
+    "list_documents": list_documents,
+    "delete_document": delete_document,
 }
 
 # 给模型的工具描述列表
@@ -65,6 +73,7 @@ tools = [
     sql_tool_def,
     chart_tool_def,
     *excel_tool_defs,
+    *rag_tool_defs,
 ]
 
 # 按类别组织的工具注册表 (硬编码默认值)
@@ -75,6 +84,7 @@ TOOL_CATEGORIES = {
     "系统工具": ["get_system_info", "get_env_var", "get_process_info"],
     "AI工具": ["analyze_image", "generate_image", "edit_image"],
     "数据工具": ["sql_query", "generate_chart", "read_excel", "write_excel"],
+    "知识库": ["search_knowledge", "upload_document", "list_documents", "delete_document"],
 }
 
 

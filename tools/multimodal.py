@@ -8,6 +8,7 @@
 """
 
 import os
+import json
 import base64
 import uuid
 from io import BytesIO
@@ -22,6 +23,7 @@ API_HOST = os.getenv("API_HOST", "http://localhost:9090")
 UPLOADS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 
+# 内存回退缓存 (Redis 不可用时使用)
 _session_images: dict[str, list[str]] = {}
 
 # 魔搭 API 图片限制 (消融实验测定)
@@ -82,18 +84,60 @@ def _save_file(image_path_or_uri: str) -> str:
 
 
 def store_session_images(session_id: str, images: list[str]):
-    _session_images[session_id] = []
+    urls = []
     for img in images:
         url = _save_file(img)
-        _session_images[session_id].append(url)
+        urls.append(url)
+    # 写入内存缓存 (同步)
+    _session_images[session_id] = urls
+    # 写入 Redis (异步，不阻塞)
+    _persist_to_redis(session_id, urls)
 
 
 def clear_session_images(session_id: str):
     _session_images.pop(session_id, None)
+    try:
+        import asyncio
+        asyncio.get_event_loop().create_task(_delete_from_redis(session_id))
+    except RuntimeError:
+        pass
 
 
 def get_session_images(session_id: str) -> list[str]:
+    """获取会话图片 — 优先 Redis → 回退内存"""
+    if not session_id:
+        return []
+    # 尝试同步读取 Redis
+    try:
+        from backend.services.redis_client import redis_client
+        if redis_client.enabled:
+            import asyncio
+            data = asyncio.run(redis_client.get(f"images:{session_id}"))
+            if data:
+                return json.loads(data)
+    except (RuntimeError, ImportError):
+        pass
     return _session_images.get(session_id, [])
+
+
+def _persist_to_redis(session_id: str, urls: list[str]):
+    try:
+        from backend.services.redis_client import redis_client
+        if redis_client.enabled:
+            import asyncio
+            asyncio.get_event_loop().create_task(
+                redis_client.setex(f"images:{session_id}", 86400, json.dumps(urls)))
+    except (RuntimeError, ImportError):
+        pass
+
+
+async def _delete_from_redis(session_id: str):
+    try:
+        from backend.services.redis_client import redis_client
+        if redis_client.enabled:
+            await redis_client.delete(f"images:{session_id}")
+    except Exception:
+        pass
 
 
 def analyze_image(image_index: int = 0, question: str = "请描述这张图片",
@@ -103,21 +147,15 @@ def analyze_image(image_index: int = 0, question: str = "请描述这张图片",
     from backend.logger import get_logger
     _log = get_logger("tool.multimodal")
 
-    # 查找原始图片
+    # 查找原始图片 (仅当前会话，不跨会话搜索)
     image_src = None
     if session_id:
         imgs = get_session_images(session_id)
         if 0 <= image_index < len(imgs):
             image_src = imgs[image_index]
-    if image_src is None:
-        for sid, imgs in _session_images.items():
-            if 0 <= image_index < len(imgs):
-                image_src = imgs[image_index]
-                _log.info(f"从会话 {sid[:8]} 找到图片 {image_index}")
-                break
 
     if image_src is None:
-        _log.warning(f"未找到图片 index={image_index}, 缓存会话数={len(_session_images)}")
+        _log.warning(f"未找到图片 index={image_index} session={session_id[:8] if session_id else 'N/A'}")
         return f"错误: 未找到图片索引 {image_index}。请确认已上传图片。"
 
     _log.info(f"开始预处理图片: {image_src[:80]}...")
